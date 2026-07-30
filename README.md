@@ -1,6 +1,6 @@
 # claude-plugins
 
-a collection of useful Claude code plugins
+a collection of useful Claude Code commands and skills.
 
 ## Commands
 
