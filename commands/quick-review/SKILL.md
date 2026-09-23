@@ -77,7 +77,7 @@ Focus on things linters and typecheckers miss. Don't repeat what a configured li
 - New public API without docs/types
 - Schema/migration without corresponding model change, or vice versa
 - Config change without code change, or vice versa
-- **Intent alignment** (only when `PR CONTEXT` is present):
+- **Intent alignment** (only when `PR CONTEXT` is present). Every finding in this group is ⚪ low. A stale or incomplete PR title or body never counts as high or medium, so it can't fail the grade. If the code itself is broken, report that under the file with its own severity.
   - Scope creep: substantive changes in the diff that aren't mentioned or implied by the PR title/body
   - Missing implementation: items the body claims to add/fix/change that aren't actually present in the diff
   - Unchecked checklist items (`- [ ]`) that appear to still be required by the code (e.g., "Tests added" unchecked but no test files in diff)
