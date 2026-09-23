@@ -28,8 +28,7 @@ is the plumbing between them and GitHub.
   reads and writes go through it.
 - `git` and `python3`.
 - The command is run from inside a local checkout of the PR's repo (needed to
-  host the worktree). For the Mozart monorepo, run it from anywhere inside your
-  mozart checkout.
+  host the worktree). Any directory inside the checkout works.
 
 If `gh` is missing or unauthenticated, stop and tell the user, rather than
 half-finishing a review that can't be posted.
@@ -39,7 +38,7 @@ half-finishing a review that can't be posted.
 ### Step 1 — Set up the worktree
 
 Run the setup script with the PR reference the user gave you (a URL like
-`https://github.com/padlet/mozart/pull/61808`, or a bare number if you're already
+`https://github.com/acme/widgets/pull/1234`, or a bare number if you're already
 in the repo):
 
 ```bash
@@ -52,8 +51,8 @@ collide with local branches), creates a detached-HEAD worktree in a sibling
 `<repo>-review-worktrees/pr-<N>` directory, and prints JSON:
 
 ```json
-{"owner":"padlet","repo":"mozart","number":61808,"base_ref":"main",
- "head_sha":"…","worktree":"…/mozart-review-worktrees/pr-61808",
+{"owner":"acme","repo":"widgets","number":1234,"base_ref":"main",
+ "head_sha":"…","worktree":"…/widgets-review-worktrees/pr-1234",
  "url":"…","title":"…","diff_base":"origin/main","repo_root":"…"}
 ```
 
@@ -116,7 +115,7 @@ schema:
 
 ```json
 {
-  "pr": {"owner": "padlet", "repo": "mozart", "number": 61808},
+  "pr": {"owner": "acme", "repo": "widgets", "number": 1234},
   "summary": "Short, human overall summary (translated). Optional.",
   "event": "COMMENT",
   "comments": [
