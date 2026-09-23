@@ -105,13 +105,14 @@ For each PR, emit this block. No preamble.
 ```
 # Stack Verdict
 ## <🟢 ✅ APPROVABLE | 🔴 ⛔ BLOCKED>   Grade `<A–F>` · Score `<score>/100`
-| PR | Verdict | Confidence |
-|---|---|---|
-| [#<N>](<url>) <title> | ✅ / ⛔ | `<score>` |
+| PR | Verdict | Confidence | Link |
+|---|---|---|---|
+| #<N> <short title> | ✅ / ⛔ | `<score>` | <full PR url, bare> |
 
 > <One or two plain sentences on what the stack delivers as a whole.>
 ```
 
+- In the table, `<short title>` is 2–5 words. Put the PR url in the Link column as bare text, not a markdown link, so terminals print the whole address.
 - The stack is APPROVABLE only if every PR is.
 - Stack score: the mean of the PR scores, capped at the lowest PR score + 10.
 - Grade from the stack score: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below 60.
