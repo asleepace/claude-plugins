@@ -100,15 +100,24 @@ For each PR, emit this block. No preamble.
 - Omit `Blockers` when the PR is approvable. Omit `Notes` when there is nothing to add.
 - File links: `<url-without-/pull/N>/blob/<head_sha>/<path>#L<line>`.
 
-**Range or multi-PR runs:** after the per-PR blocks, add:
+**Every run** ends with a verdict table after the per-PR blocks, even for a single PR. It has one row per PR.
+
+```
+| PR | Verdict | Confidence | Link |
+|---|---|---|---|
+| #<N> <short title> | ✅ / ⛔ | `<score>` | <full PR url, bare> |
+```
+
+For a range or multi-PR run, put this above the table:
 
 ```
 # Stack Verdict
 ## <🟢 ✅ APPROVABLE | 🔴 ⛔ BLOCKED>   Grade `<A–F>` · Score `<score>/100`
-| PR | Verdict | Confidence | Link |
-|---|---|---|---|
-| #<N> <short title> | ✅ / ⛔ | `<score>` | <full PR url, bare> |
+```
 
+and this below it:
+
+```
 > <One or two plain sentences on what the stack delivers as a whole.>
 ```
 
