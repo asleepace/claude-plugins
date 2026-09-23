@@ -8,4 +8,5 @@ a collection of useful Claude Code commands and skills.
 
 ## Skills
 
+- [review-in-background](/skills/review-in-background/SKILL.md): review a GitHub PR in an isolated worktree and post the results back as PR comments
 - [translate-human](/skills/translate-human/SKILL.md): translate context output into human readable technical jargon

@@ -71,6 +71,7 @@ Focus on things linters and typecheckers miss. Don't repeat what a configured li
 - Implicit `any` in new function params
 
 **General** (not tied to a specific file — use the `General` entry in the output)
+- A better or simpler approach that would drastically reduce complexity
 - Missing tests for new functionality
 - Inconsistent patterns across changed files (multiple error-handling styles, mixed naming)
 - New public API without docs/types
@@ -84,7 +85,7 @@ Focus on things linters and typecheckers miss. Don't repeat what a configured li
 
 ## Output format
 
-Emit exactly this structure. No preamble, no trailing comments.
+Emit exactly this structure. No preamble, no trailing comments. Use ASD-STE100 Simplified Technical English.
 
 ```
 # Quick Review
