@@ -2,6 +2,7 @@
 name: quick-review
 description: Fast sanity-check review of this branch vs its PR base. Use when the user asks for a "quick review", "self-review", "pre-push check", "sanity check the branch", or any lightweight review of the current branch before opening or merging a PR.
 argument-hint: [base-branch]
+model: sonnet
 allowed-tools: Bash(~/.claude/commands/quick-review/scripts/quick-review-state.sh:*), Bash(git:*), Read, Grep, Glob
 ---
 
@@ -18,6 +19,8 @@ Fast first-pass review of this branch vs its PR base. Catches common sloppy erro
 The script has already resolved the base branch, computed the merge-base SHA, listed every changed file, and dumped every non-lockfile diff in `=== DIFFS ===`. **Read diffs from that section — do not call `git diff` per file.**
 
 **If `=== PR CONTEXT ===` is present**, read the `title` and `body` first. They state what the PR is supposed to do. Use this as the intent baseline when reviewing: every claim in the body should be backed by a matching change in the diff, and every substantive change in the diff should be plausibly covered by the stated intent. Section-less "fix typo" PRs won't have much intent to check; feature PRs with bulleted descriptions give you a lot to cross-reference. If `PR CONTEXT` is absent (no open PR, or no `gh` installed), skip the intent check and review the diff on its own merits.
+
+**`=== MECHANICAL HITS ===`** lists regex matches on added lines, already tagged with a severity, file, and line. Confirm each hit against DIFFS and report it with that severity. Drop it if the match is a false positive, for example inside a string, a doc comment, or a test fixture. Don't search the diff for these patterns yourself; spend the review on the checks a regex can't do.
 
 **Handle `STRATEGY` first:**
 

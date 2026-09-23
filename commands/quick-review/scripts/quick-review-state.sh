@@ -49,18 +49,20 @@ normalize_remote() {
 REPO_URL=$(normalize_remote "$(git remote get-url origin 2>/dev/null || true)")
 
 # ---------- PR metadata (base + url + title + body), fetched once up top ----------
-# Four gh calls rather than one with jq post-processing — keeps things simple
-# and avoids jq dependency. Each call is ~300ms; total overhead ~1-1.5s when
-# an open PR exists. No PR → all four return empty, no delay.
+# One gh call (~1s). gh's built-in -q prints base, url and title on the first
+# three lines and the multi-line body after them, so no jq is needed.
 PR_BASE_REF=""
 PR_URL=""
 PR_TITLE=""
 PR_BODY=""
 if command -v gh >/dev/null 2>&1; then
-    PR_BASE_REF=$(gh pr view --json baseRefName -q .baseRefName 2>/dev/null || true)
-    PR_URL=$(gh pr view --json url -q .url 2>/dev/null || true)
-    PR_TITLE=$(gh pr view --json title -q .title 2>/dev/null || true)
-    PR_BODY=$(gh pr view --json body -q .body 2>/dev/null || true)
+    PR_META=$(gh pr view --json baseRefName,url,title,body -q '.baseRefName, .url, .title, .body' 2>/dev/null || true)
+    if [ -n "$PR_META" ]; then
+        PR_BASE_REF=$(printf '%s\n' "$PR_META" | sed -n 1p)
+        PR_URL=$(printf '%s\n' "$PR_META" | sed -n 2p)
+        PR_TITLE=$(printf '%s\n' "$PR_META" | sed -n 3p)
+        PR_BODY=$(printf '%s\n' "$PR_META" | sed -n '4,$p')
+    fi
 fi
 
 # ---------- resolve base branch ----------
@@ -234,6 +236,36 @@ if [ -n "$BASE_SHA" ] && [ "$FILES_COUNT" -gt 0 ]; then
     fi
 
     if [ "${#INCLUDED[@]}" -gt 0 ]; then
+        # Regex pass over added lines so the model can skip hunting for these.
+        # Prints "<severity> <path>:<line> <check>: <line text>".
+        HITS=$(git diff -U0 "$BASE_SHA"..HEAD -- "${INCLUDED[@]}" 2>/dev/null | perl -ne '
+            if (/^\+\+\+ b\/(.*)$/) { $f = $1; next }
+            if (/^@@ -\S+ \+(\d+)/) { $n = $1; next }
+            next unless /^\+/ && !/^\+\+\+ /;
+            my $t = substr($_, 1); chomp $t;
+            my @c = (
+                ["high",   "Conflict marker",      qr/^(<{7}|={7}|>{7})( |$)/],
+                ["high",   "Possible secret",      qr/AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|\bsk-[A-Za-z0-9_-]{20,}|xox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----/],
+                ["medium", "Focused/skipped test", qr/\b(it|test|describe)\.(only|skip)\(|\b(fit|fdescribe|xit|xdescribe)\(/],
+                ["medium", "Debugger statement",   qr/^\s*debugger\b/],
+                ["medium", "Bare ts-ignore",       qr/\@ts-(ignore|expect-error)\s*(\*\/)?\s*$/],
+                ["medium", "Any cast",             qr/\bas (any|unknown as)\b/],
+                ["medium", "Empty catch",          qr/catch\s*(\([^)]*\))?\s*\{\s*\}/],
+                ["low",    "Debug print",          qr/\bconsole\.(log|debug)\(|\bdbg!\(|\bfmt\.Println\(/],
+                ["low",    "TODO marker",          qr/\b(TODO|FIXME|XXX|HACK)\b/],
+                ["low",    "Unexplained eslint-disable", qr/eslint-disable(?!.*--)/],
+            );
+            for my $x (@c) { print "$x->[0] $f:$n $x->[1]: " . substr($t =~ s/^\s+//r, 0, 160) . "\n" if $t =~ $x->[2] }
+            $n++;
+        ')
+        SECRET_FILES=$(printf '%s\n' "${INCLUDED[@]}" | grep -E '(^|/)\.env(\.|$)|\.(pem|key|p12)$' | grep -vE '\.env\.(example|sample|template)$' || true)
+        if [ -n "$SECRET_FILES" ]; then
+            HITS=$(printf '%s\n' "$HITS"; printf '%s\n' "$SECRET_FILES" | sed 's/^/high /; s/$/ Committed secret file: whole file/')
+        fi
+        echo ""
+        echo "=== MECHANICAL HITS === (regex candidates on added lines; confirm in DIFFS)"
+        printf '%s\n' "${HITS:-<none>}" | awk 'NF>0'
+
         echo ""
         echo "=== DIFFS ==="
         git diff "$BASE_SHA"..HEAD -- "${INCLUDED[@]}" 2>/dev/null || true
