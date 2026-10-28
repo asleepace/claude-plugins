@@ -50,6 +50,8 @@ Tone is the point here. Keep it warm, collaborative, and encouraging. You are a 
 
 Blocking or functional feedback needs no tag, its importance is clear from the content.
 
+**Footer when posting.** If you post the comment to GitHub yourself (a review comment, reply, or PR conversation comment), end it with `~ Claude` on its own line, after a blank line. Skip it when the text goes back to the user to paste, and when a script that posts it already adds the footer (for example `/review-in-background`'s submit and reply scripts). PR descriptions never get it.
+
 **Example**
 
 Input (AI voice):
@@ -110,7 +112,7 @@ Output (translated):
 
 - Did any em dash or prose semicolon survive? Remove it.
 - Is any real code example still stuck inline in a sentence? Move it to a block.
-- For a review comment: is the tone warm, does it use "we", and is each comment local to its code?
+- For a review comment: is the tone warm, does it use "we", and is each comment local to its code? If you are posting it yourself, does it end with `~ Claude` (once, not doubled by a script)?
 - For a PR description: could a non-technical PM read the Summary and get it?
 - Is anything left that does not earn its place? Cut it.
 
