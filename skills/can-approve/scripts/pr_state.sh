@@ -23,16 +23,20 @@ REPO="$(printf '%s' "$URL" | sed -E 's#https://github.com/[^/]+/([^/]+)/.*#\1#')
 NUMBER="${URL##*/}"
 
 echo "=== META ==="
-gh pr view "$URL" --json number,title,url,state,isDraft,baseRefName,headRefName,headRefOid,mergeable,reviewDecision,additions,deletions,changedFiles \
-  -q '"number: \(.number)\ntitle: \(.title)\nurl: \(.url)\nstate: \(.state)\ndraft: \(.isDraft)\nbase: \(.baseRefName)\nhead: \(.headRefName)\nhead_sha: \(.headRefOid)\nmergeable: \(.mergeable)\nreview_decision: \(.reviewDecision)\nsize: +\(.additions) -\(.deletions) in \(.changedFiles) files"'
+gh pr view "$URL" --json number,title,url,author,state,isDraft,baseRefName,headRefName,headRefOid,mergeable,reviewDecision,reviews,additions,deletions,changedFiles \
+  -q '"number: \(.number)\ntitle: \(.title)\nurl: \(.url)\nauthor: @\(.author.login)\nstate: \(.state)\ndraft: \(.isDraft)\nbase: \(.baseRefName)\nhead: \(.headRefName)\nhead_sha: \(.headRefOid)\nmergeable: \(.mergeable)\nreview_decision: \(.reviewDecision)\napproved_by: \([.reviews[] | select(.state == "APPROVED") | "@" + .author.login] | unique | join(" ") | if . == "" then "none" else . end)\nsize: +\(.additions) -\(.deletions) in \(.changedFiles) files"'
+
+echo
+echo "=== BODY ==="
+gh pr view "$URL" --json body -q '.body'
 
 echo
 echo "=== COMMITS === (oldest first; authored date, since restacks reset committer dates)"
 gh pr view "$URL" --json commits \
-  -q '.commits[] | "\(.authoredDate) \(.oid[0:10]) \(.messageHeadline)"'
+  -q '.commits[] | "\(.authoredDate) \(.oid[0:10]) \([.authors[].login // .authors[].name] | map("@" + .) | join(","))  \(.messageHeadline)"'
 
 echo
-echo "=== REVIEWS === (latest review per author)"
+echo "=== REVIEWS === (latest review per author; approved_by in META counts every approval)"
 gh pr view "$URL" --json reviews \
   -q '[.reviews[] | select(.state != "PENDING")] | group_by(.author.login) | map(max_by(.submittedAt))[]
       | "\(.submittedAt) @\(.author.login) \(.state) on \(.commit.oid[0:10] // "?")" + (if (.body | length) > 0 then "\n    " + (.body | gsub("\n"; "\n    ") | .[0:5000]) else "" end)'

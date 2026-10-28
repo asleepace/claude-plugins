@@ -75,6 +75,11 @@ git -C "$REPO_ROOT" fetch --quiet origin "pull/$NUMBER/head"
 FETCHED_SHA="$(git -C "$REPO_ROOT" rev-parse FETCH_HEAD)"
 [ -n "$HEAD_SHA" ] || HEAD_SHA="$FETCHED_SHA"
 
+# Pin the head under refs/rib/ so verification and follow-up replies can still
+# `git show` it after the worktree is gone. cleanup_worktree.sh deletes it.
+REVIEW_REF="refs/rib/pr-$NUMBER"
+git -C "$REPO_ROOT" update-ref "$REVIEW_REF" "$FETCHED_SHA"
+
 # Make sure the base branch is present locally so the review can diff against it.
 log "Fetching base ref ($BASE_REF) ..."
 git -C "$REPO_ROOT" fetch --quiet origin "$BASE_REF" || \
@@ -90,10 +95,10 @@ mkdir -p "$(dirname "$WT_DIR")"
 
 if git -C "$REPO_ROOT" worktree list --porcelain | grep -qxF "worktree $WT_DIR"; then
   log "Worktree already exists at $WT_DIR; reusing and moving it to the PR head."
-  git -C "$WT_DIR" checkout --quiet --detach "$FETCHED_SHA"
+  LEFTHOOK=0 git -C "$WT_DIR" checkout --quiet --detach "$FETCHED_SHA"
 else
   log "Creating worktree at $WT_DIR (detached at PR head) ..."
-  git -C "$REPO_ROOT" worktree add --quiet --detach "$WT_DIR" "$FETCHED_SHA"
+  LEFTHOOK=0 git -C "$REPO_ROOT" worktree add --quiet --detach "$WT_DIR" "$FETCHED_SHA"
 fi
 
 # Diff base: the merge-base of the PR head and the base branch, so the review
@@ -101,10 +106,10 @@ fi
 # movement on the base branch.
 DIFF_BASE="origin/$BASE_REF"
 
-python3 - "$OWNER" "$REPO" "$NUMBER" "$BASE_REF" "$HEAD_SHA" "$WT_DIR" "$URL" "$TITLE" "$DIFF_BASE" "$REPO_ROOT" <<'PY'
+python3 - "$OWNER" "$REPO" "$NUMBER" "$BASE_REF" "$HEAD_SHA" "$WT_DIR" "$URL" "$TITLE" "$DIFF_BASE" "$REPO_ROOT" "$REVIEW_REF" <<'PY'
 import json, sys
 keys = ["owner","repo","number","base_ref","head_sha","worktree",
-        "url","title","diff_base","repo_root"]
+        "url","title","diff_base","repo_root","review_ref"]
 vals = sys.argv[1:]
 d = dict(zip(keys, vals))
 d["number"] = int(d["number"])
